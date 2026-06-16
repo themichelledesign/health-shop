@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康生活美學館</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #a38c6d; --primary-hover: #8a7356; --bg: #fcfcfc; --text: #333; --border: #eaeaea; }
+        
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; margin: 0; padding: 0; color: var(--text);
+            background-image: url('https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover; background-attachment: fixed; background-position: center;
+        }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(252, 252, 252, 0.85); z-index: -1; }
+        
+        /* 導覽列與搜尋框 */
+        header { background-color: rgba(255, 255, 255, 0.95); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; backdrop-filter: blur(5px); flex-wrap: wrap; gap: 15px;}
+        .logo-nav { display: flex; align-items: center; gap: 30px; }
+        header h1 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: 2px; color: #111; }
+        .top-nav a { text-decoration: none; color: #555; font-size: 15px; transition: 0.3s; font-weight: 500; cursor: pointer; }
+        .top-nav a:hover { color: var(--primary); }
+        
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .search-box { padding: 8px 15px; border: 1px solid var(--border); border-radius: 20px; outline: none; width: 200px; font-family: inherit; transition: 0.3s; }
+        .search-box:focus { border-color: var(--primary); width: 250px; }
+        .cart-btn { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .cart-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        .filters { padding: 25px 20px; display: flex; gap: 20px; justify-content: center; background: rgba(255, 255, 255, 0.9); }
+        .filter-btn { background: none; border: none; font-size: 15px; color: #888; cursor: pointer; padding-bottom: 5px; position: relative; transition: 0.3s; }
+        .filter-btn.active { color: #111; font-weight: 500; }
+        .filter-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background-color: var(--primary); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: 50vh;}
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+        .product-card { background: #fff; border-radius: 8px; overflow: hidden; transition: 0.3s; position: relative; border: 1px solid transparent; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column;}
+        .product-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-color: var(--border); }
+        .product-image { width: 100%; height: 260px; object-fit: cover; background: #f5f5f5; cursor: pointer;}
+        .card-body { padding: 20px; text-align: center; flex-grow: 1; display: flex; flex-direction: column;}
+        .card-category { font-size: 12px; color: #999; margin-bottom: 8px; letter-spacing: 1px; }
+        .product-title { font-size: 16px; margin: 0 0 10px 0; font-weight: 400; color: #222; }
+        .product-price { color: var(--primary); font-size: 18px; font-weight: 500; margin-bottom: 15px; }
+        
+        /* 商品卡片按鈕區 */
+        .card-buttons { display: flex; gap: 10px; margin-top: auto; }
+        .detail-btn { background: #fff; color: #333; border: 1px solid #ccc; padding: 10px; flex: 1; font-size: 14px; cursor: pointer; transition: 0.3s; border-radius: 4px; }
+        .detail-btn:hover { border-color: #888; background: #f9f9f9; }
+        .add-to-cart { background: #111; color: #fff; border: none; padding: 10px; flex: 1; font-size: 14px; cursor: pointer; transition: 0.3s; border-radius: 4px; }
+        .add-to-cart:hover { background: var(--primary); }
+
+        .admin-edit-btn { display: none; position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: 1px solid #ddd; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; z-index: 10; }
+        
+        .add-btn { display: none; position: fixed; bottom: 30px; right: 30px; background-color: var(--primary); color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(163, 140, 109, 0.4); z-index: 100; transition: 0.3s; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .modal-content h2 { font-weight: 500; font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-top: 0; }
+        .close-btn { position: absolute; top: 25px; right: 25px; font-size: 20px; cursor: pointer; color: #888; border: none; background: none; }
+        
+        /* 詳細資訊 Modal 樣式 */
+        .specs-list { list-style: none; padding: 0; margin: 20px 0; font-size: 15px; line-height: 1.8; color: #444; }
+        .specs-list li { border-bottom: 1px dashed #eee; padding: 8px 0; display: flex; }
+        .specs-list li strong { width: 140px; color: #777; flex-shrink: 0; }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #555; }
+        .form-group input[type="text"], .form-group input[type="number"], .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+
+        .radio-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; }
+        .radio-group label { display: flex; align-items: center; cursor: pointer; font-weight: normal; margin: 0; }
+        .radio-group input { margin-right: 5px; }
+
+        .submit-btn { background-color: var(--primary); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-size: 15px; border-radius: 4px; letter-spacing: 1px; transition: 0.3s; margin-top: 15px;}
+        .submit-btn:hover { background-color: var(--primary-hover); }
+
+        .qty-control { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+        .qty-btn { background: #f9f9f9; border: none; padding: 5px 12px; cursor: pointer; color: #555; font-size: 14px; }
+        .qty-display { padding: 0 10px; font-size: 14px; min-width: 20px; text-align: center; }
+
+        /* 專業深色 Footer 設計 */
+        .site-footer { background-color: #2c303a; color: #ccc; padding: 50px 20px 20px; margin-top: 50px; font-size: 14px; }
+        .footer-container { max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 30px; border-bottom: 1px solid #444; padding-bottom: 30px; }
+        .footer-col { flex: 1; min-width: 200px; }
+        .footer-col h3 { color: #fff; font-size: 16px; font-weight: 500; margin-bottom: 20px; letter-spacing: 1px; }
+        .footer-col p { margin: 8px 0; display: flex; align-items: center; gap: 8px; }
+        .footer-col a { color: #ccc; text-decoration: none; display: block; margin-bottom: 10px; transition: 0.3s; }
+        .footer-col a:hover { color: #fff; padding-left: 5px; }
+        .footer-bottom { max-width: 1100px; margin: 20px auto 0; text-align: center; font-size: 12px; color: #888; }
+        
+        .admin-action { cursor: pointer; margin: 0 10px; transition: 0.3s; }
+        .admin-action:hover { color: #fff; }
+        #logoutBtn { display: none; color: #e57373; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-nav">
+            <h1>健康生活美學館</h1>
+            <nav class="top-nav">
+                <a onclick="openModal('aboutModal')">關於本站</a>
+            </nav>
+        </div>
+        <div class="header-actions">
+            <!-- 搜尋框 -->
+            <input type="text" id="searchInput" class="search-box" placeholder="搜尋商品名稱或成分..." onkeyup="handleSearch()">
+            <button class="cart-btn" onclick="openModal('cartModal')">🛒 購物車 (<span id="cartBadgeCount">0</span>)</button>
+        </div>
+    </header>
+
+    <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('全部', this)">全部商品</button>
+        <button class="filter-btn" onclick="setFilter('醫療美容', this)">醫療美容</button>
+        <button class="filter-btn" onclick="setFilter('保健食品', this)">保健食品</button>
+        <button class="filter-btn" onclick="setFilter('漢方養生', this)">漢方養生</button>
+    </div>
+
+    <div class="container">
+        <div id="loading" style="text-align:center; padding: 50px; color: #888;">正在為您準備優質商品...</div>
+        <div class="product-grid" id="productGrid"></div>
+    </div>
+
+    <button class="add-btn" id="addBtn" onclick="openEditModal(null)">+</button>
+
+    <!-- 關於本站 Modal -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('aboutModal')">&times;</button>
+            <h2>關於本站</h2>
+            <div style="line-height: 1.8; color: #555; margin-top: 20px;">
+             <img src="https://png.pngtree.com/png-clipart/20221226/ourmid/pngtree-illustration-of-a-boy-in-a-suit-png-image_6497275.png" style="width: 100%; border-radius: 8px; margin: 15px 0; object-fit: cover;" alt="經銷商資訊圖片">
+                <p><strong>館長：</strong>程武雄</p>
+                <p>我們致力於提供專業的高品質醫療保健與美學產品，專注於健康領域的推廣與服務。</p>
+                <p><strong>服務時間：</strong>週一至週五 09:00 - 17:00</p>
+              
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品詳細資料 Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+            <h2 id="detailTitle">商品詳細資料</h2>
+            <div style="text-align: center;">
+                <img id="detailImage" src="" style="max-width: 100%; height: 200px; object-fit: contain; background: #f9f9f9; padding: 10px; border-radius: 8px;">
+            </div>
+            <h3 style="color: var(--primary); text-align: center; margin: 10px 0;">NT$ <span id="detailPrice"></span></h3>
+            
+            <ul class="specs-list">
+                <li><strong>商品名稱</strong><span id="detailName"></span></li>
+                <li><strong>主要成分或材料</strong><span id="detailIngredients"></span></li>
+                <li><strong>用途功效</strong><span id="detailDesc"></span></li>
+                <li><strong>淨重</strong><span id="detailWeight"></span></li>
+                <li><strong>容量</strong><span id="detailCapacity"></span></li>
+                <li><strong>製造年月</strong><span id="detailMfgDate"></span></li>
+                <li><strong>有效日期</strong><span id="detailExpiry"></span></li>
+                <li><strong>出貨地</strong><span id="detailOrigin"></span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 管理員新增/編輯 Modal (擴充 11 欄位) -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('productModal')">&times;</button>
+            <h2 id="productModalTitle">新增商品</h2>
+            <form id="productForm">
+                <input type="hidden" id="editRowId">
+                <div class="form-row">
+                    <div class="form-group"><label>商品名稱</label><input type="text" id="inputName" required></div>
+                    <div class="form-group">
+                        <label>分類</label>
+                        <select id="inputCategory">
+                            <option value="醫療美容">醫療美容</option>
+                            <option value="保健食品">保健食品</option>
+                            <option value="漢方養生">漢方養生</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>商品價格 (NT$)</label><input type="number" id="inputPrice" required></div>
+                    <div class="form-group"><label>圖片網址 (免費圖床)</label><input type="text" id="inputImage"></div>
+                </div>
+                
+                <div class="form-group"><label>用途功效</label><textarea id="inputDesc" rows="2"></textarea></div>
+                <div class="form-group"><label>主要成分或材料</label><textarea id="inputIngredients" rows="2"></textarea></div>
+                
+                <div class="form-row">
+                    <div class="form-group"><label>淨重 (例: 500g)</label><input type="text" id="inputWeight"></div>
+                    <div class="form-group"><label>容量 (例: 30ml)</label><input type="text" id="inputCapacity"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>製造年月</label><input type="text" id="inputMfgDate"></div>
+                    <div class="form-group"><label>有效日期</label><input type="text" id="inputExpiry"></div>
+                </div>
+                <div class="form-group"><label>出貨地</label><input type="text" id="inputOrigin"></div>
+                
+                <button type="button" class="submit-btn" onclick="submitProduct()">確認儲存</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 顧客購物車 Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('cartModal')">&times;</button>
+            <h2>結帳清單</h2>
+            <div id="cartItemsList" style="margin-bottom: 20px; max-height: 250px; overflow-y: auto; padding-right: 10px;"></div>
+            <h3 style="text-align: right; color: var(--primary); font-weight: 500; border-top: 1px solid var(--border); padding-top: 15px;">總計: NT$ <span id="cartTotal">0</span></h3>
+            
+            <form id="orderForm" style="margin-top: 25px;">
+                <div class="form-row">
+                    <div class="form-group"><label>收件人姓名</label><input type="text" id="orderName" required></div>
+                    <div class="form-group"><label>聯絡電話/LINE</label><input type="text" id="orderPhone" required></div>
+                </div>
+                <div class="form-group">
+                    <label>付款方式</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="payType" value="現金" checked onclick="toggleBankInput()"> 現金付款</label>
+                        <label><input type="radio" name="payType" value="轉帳" onclick="toggleBankInput()"> 匯款轉帳</label>
+                    </div>
+                    <input type="text" id="bankAccount" placeholder="請輸入匯款帳號末五碼" style="display:none; margin-top:10px;">
+                </div>
+                <div class="form-group">
+                    <label>收據明細</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="receiptType" value="不需收據" checked> 不需收據</label>
+                        <label><input type="radio" name="receiptType" value="電子收據"> 電子收據</label>
+                        <label><input type="radio" name="receiptType" value="紙本收據"> 紙本收據</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>寄送方式</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="shipType" value="店取" checked> 來店自取</label>
+                        <label><input type="radio" name="shipType" value="郵寄"> 郵局寄送</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>收件地址 (來店自取免填)</label>
+                    <input type="text" id="orderAddress" placeholder="請填寫完整寄送地址">
+                </div>
+                <button type="button" class="submit-btn" onclick="submitOrder()">送出訂單</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 深色專業 Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3>網站連結</h3>
+                <a onclick="openModal('aboutModal')" style="cursor:pointer;">關於本站</a>
+                <a href="#">限時優惠活動</a>     
+                <a href="#">隱私權政策</a>
+            </div>
+            <div class="footer-col">
+                <h3>聯絡資訊</h3>
+                <p>📞 電話：0963-769-732</p>
+                         <p>0988-326-649</p>
+                         <p>0906-357-073</p>
+                         <p>0968-500-586</p>
+                         <p>0968500586</p>
+                <p>✉️ 信箱：the.michelle.design@gmail.com</p>
+                <p>🏠 地址：西螺鎮安定里103號</p>
+                         <p>斗六市仁義路13巷56號</p>
+            </div>
+            <div class="footer-col">
+                <h3>關注我們</h3>                
+                <p>如有任何商品問題，歡迎與我們聯繫，我們將盡快為您服務。</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 健康生活美學館 All Rights Reserved. 
+            <span class="admin-action" id="loginBtn" onclick="adminLogin()">管理員登入</span>
+            <span class="admin-action" id="logoutBtn" onclick="adminLogout()">登出管理員</span>
+        </div>
+    </footer>
+
+    <script>
+        // ★★★ 記得替換成最新的 Web App URL ★★★
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwhKPL2G1F8lxAelZW0N97T5w4lOkmYvGUg8-e_RhVVShr6_hJeqzWnrRp_IAFU3ZE/exec';
+        
+        let productsData = [];
+        let cart = []; 
+        let currentCategory = '全部';
+        let searchQuery = '';
+        
+        let adminPassword = sessionStorage.getItem('adminPass');
+        if (adminPassword) {
+            document.getElementById('addBtn').style.display = 'block';
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline';
+        }
+
+        function adminLogin() {
+            const pass = prompt("請輸入管理員密碼：");
+            if (pass) { sessionStorage.setItem('adminPass', pass); location.reload(); }
+        }
+        function adminLogout() { sessionStorage.removeItem('adminPass'); location.reload(); }
+
+        async function fetchProducts() {
+            try {
+                const response = await fetch(API_URL);
+                productsData = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                renderProducts();
+            } catch (error) { document.getElementById('loading').innerText = '系統忙線中，請稍後重試。'; }
+        }
+
+        function setFilter(category, btn) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            
+            // 進行分類與關鍵字搜尋雙重過濾
+            const filteredProducts = productsData.filter(p => {
+                const matchCategory = currentCategory === '全部' || p.category === currentCategory;
+                const searchStr = `${p.name} ${p.ingredients} ${p.desc}`.toLowerCase();
+                const matchSearch = searchStr.includes(searchQuery);
+                return matchCategory && matchSearch;
+            });
+
+            filteredProducts.forEach((p) => {
+                const productJSON = encodeURIComponent(JSON.stringify(p));
+                const editBtnDisplay = adminPassword ? 'block' : 'none';
+                
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <button class="admin-edit-btn" style="display:${editBtnDisplay};" onclick="openEditModal('${productJSON}')">✎ 編輯</button>
+                        <img class="product-image" src="${p.image || 'https://via.placeholder.com/400x300'}" onclick="openDetailModal('${productJSON}')">
+                        <div class="card-body">
+                            <div class="card-category">${p.category}</div>
+                            <h3 class="product-title">${p.name}</h3>
+                            <p class="product-price">NT$ ${p.price}</p>
+                            <div class="card-buttons">
+                                <button class="detail-btn" onclick="openDetailModal('${productJSON}')">詳細資料</button>
+                                <button class="add-to-cart" onclick="addToCart('${productJSON}', this)">放入購物車</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            if(filteredProducts.length === 0) grid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #888;">找不到符合條件的商品</p>';
+        }
+
+        // 開啟詳細資料 Modal
+        function openDetailModal(productJSON) {
+            const p = JSON.parse(decodeURIComponent(productJSON));
+            document.getElementById('detailImage').src = p.image || 'https://via.placeholder.com/400x300';
+            document.getElementById('detailName').innerText = p.name || '無';
+            document.getElementById('detailPrice').innerText = p.price || '0';
+            document.getElementById('detailDesc').innerText = p.desc || '無特別說明';
+            document.getElementById('detailIngredients').innerText = p.ingredients || '未標示';
+            document.getElementById('detailWeight').innerText = p.weight || '未標示';
+            document.getElementById('detailCapacity').innerText = p.capacity || '未標示';
+            document.getElementById('detailMfgDate').innerText = p.mfgDate || '未標示';
+            document.getElementById('detailOrigin').innerText = p.origin || '未標示';
+            document.getElementById('detailExpiry').innerText = p.expiry || '未標示';
+            openModal('detailModal');
+        }
+
+        function addToCart(productJSON, btnElement) {
+            const product = JSON.parse(decodeURIComponent(productJSON));
+            const existingItemIndex = cart.findIndex(item => item.name === product.name);
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].qty += 1;
+            } else {
+                product.qty = 1;
+                cart.push(product);
+            }
+            updateCartBadge();
+            renderCart();
+
+            if(btnElement) {
+                const originalText = btnElement.innerText;
+                const originalBg = btnElement.style.backgroundColor;
+                btnElement.innerText = '✓ 已加入';
+                btnElement.style.backgroundColor = '#4CAF50';
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.backgroundColor = originalBg;
+                }, 1000);
+            }
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cartBadgeCount').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+        }
+
+        function changeQty(index, delta) {
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) cart.splice(index, 1);
+            updateCartBadge(); renderCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartBadge(); renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            list.innerHTML = '';
+            let totalAmount = 0;
+            if(cart.length === 0) list.innerHTML = '<p style="color:#888; text-align:center;">尚未選購任何商品</p>';
+
+            cart.forEach((item, index) => {
+                const itemTotal = parseInt(item.price) * item.qty;
+                totalAmount += itemTotal;
+                list.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px dashed #eee; padding-bottom:12px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:500; font-size:15px; margin-bottom:4px;">${item.name}</div>
+                            <div style="color:#888; font-size:12px;">單價 NT$ ${item.price}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div class="qty-control">
+                                <button type="button" class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                                <span class="qty-display">${item.qty}</span>
+                                <button type="button" class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                            </div>
+                            <div style="width:75px; text-align:right; font-weight:500;">NT$ ${itemTotal}</div>
+                            <button type="button" onclick="removeFromCart(${index})" style="color:#e57373; border:none; background:none; cursor:pointer; font-size:18px;">✕</button>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('cartTotal').innerText = totalAmount;
+        }
+
+        function toggleBankInput() {
+            const payType = document.querySelector('input[name="payType"]:checked').value;
+            document.getElementById('bankAccount').style.display = payType === '轉帳' ? 'block' : 'none';
+        }
+
+        function openEditModal(productJSON) {
+            if (!productJSON) {
+                document.getElementById('productModalTitle').innerText = '上架新商品';
+                document.getElementById('productForm').reset();
+                document.getElementById('editRowId').value = '';
+            } else {
+                const p = JSON.parse(decodeURIComponent(productJSON));
+                document.getElementById('productModalTitle').innerText = '編輯商品';
+                document.getElementById('editRowId').value = p.rowId;
+                document.getElementById('inputName').value = p.name || '';
+                document.getElementById('inputCategory').value = p.category || '醫療美容';
+                document.getElementById('inputImage').value = p.image || '';
+                document.getElementById('inputPrice').value = p.price || '';
+                document.getElementById('inputDesc').value = p.desc || '';
+                document.getElementById('inputIngredients').value = p.ingredients || '';
+                document.getElementById('inputWeight').value = p.weight || '';
+                document.getElementById('inputCapacity').value = p.capacity || '';
+                document.getElementById('inputMfgDate').value = p.mfgDate || '';
+                document.getElementById('inputOrigin').value = p.origin || '';
+                document.getElementById('inputExpiry').value = p.expiry || '';
+            }
+            openModal('productModal');
+        }
+
+        async function submitProduct() {
+            const rowId = document.getElementById('editRowId').value;
+            const actionType = rowId ? 'editProduct' : 'addProduct';
+            const formData = new URLSearchParams();
+            formData.append('action', actionType);
+            formData.append('password', adminPassword);
+            if(rowId) formData.append('rowId', rowId);
+            
+            // 傳送 11 個欄位資料
+            formData.append('name', document.getElementById('inputName').value);
+            formData.append('category', document.getElementById('inputCategory').value);
+            formData.append('image', document.getElementById('inputImage').value);
+            formData.append('price', document.getElementById('inputPrice').value);
+            formData.append('desc', document.getElementById('inputDesc').value);
+            formData.append('ingredients', document.getElementById('inputIngredients').value);
+            formData.append('weight', document.getElementById('inputWeight').value);
+            formData.append('capacity', document.getElementById('inputCapacity').value);
+            formData.append('mfgDate', document.getElementById('inputMfgDate').value);
+            formData.append('origin', document.getElementById('inputOrigin').value);
+            formData.append('expiry', document.getElementById('inputExpiry').value);
+
+            document.querySelector('#productModal .submit-btn').innerText = '處理中...';
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.success) {
+                    alert(rowId ? "編輯成功！" : "上架成功！");
+                    location.reload();
+                } else alert("錯誤：" + result.error);
+            } catch (err) { alert("連線異常"); }
+        }
+
+        async function submitOrder() {
+            if (cart.length === 0) return alert("購物車目前沒有商品");
+            const name = document.getElementById('orderName').value;
+            const phone = document.getElementById('orderPhone').value;
+            if (!name || !phone) return alert("請填寫姓名與聯絡方式");
+
+            const payType = document.querySelector('input[name="payType"]:checked').value;
+            let finalPayMethod = payType;
+            if (payType === '轉帳') {
+                const account = document.getElementById('bankAccount').value;
+                if(!account) return alert("請輸入轉帳帳號末五碼");
+                finalPayMethod = `轉帳 (末五碼: ${account})`;
+            }
+            
+            const receipt = document.querySelector('input[name="receiptType"]:checked').value;
+            const shipping = document.querySelector('input[name="shipType"]:checked').value;
+            const address = document.getElementById('orderAddress').value;
+
+            const orderDetails = cart.map(item => `${item.name} x${item.qty}`).join('、');
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'addOrder');
+            formData.append('customerName', name);
+            formData.append('customerPhone', phone);
+            formData.append('paymentMethod', finalPayMethod);
+            formData.append('receiptType', receipt);
+            formData.append('shippingMethod', shipping);
+            formData.append('address', address);
+            formData.append('orderItems', orderDetails);
+            formData.append('totalPrice', document.getElementById('cartTotal').innerText);
+
+            document.querySelector('#cartModal .submit-btn').innerText = '訂單傳送中...';
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.success) {
+                    alert("訂單送出成功！感謝您的訂購。");
+                    cart = []; location.reload();
+                }
+            } catch (err) { alert("傳送失敗"); }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        fetchProducts();
+    </script>
+</body>
+</html>
